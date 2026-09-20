@@ -1,5 +1,6 @@
 import React from 'react';
-import { Menu, Activity, RefreshCw, Send, ShieldAlert } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Menu, Activity, RefreshCw, Send, ShieldAlert, Bot, Sparkles } from 'lucide-react';
 import { telemetry } from '../services/telemetry';
 
 interface TopbarProps {
@@ -69,6 +70,15 @@ export const Topbar: React.FC<TopbarProps> = ({
             Production
           </button>
         </div>
+
+        {/* Copilot Quick Launch Button */}
+        <Link
+          to="/copilot"
+          className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-cyan-400 hover:text-cyan-300 border border-slate-700/80 hover:border-cyan-500/40 text-xs font-semibold transition-all"
+        >
+          <Bot className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">MCP Copilot</span>
+        </Link>
 
         {/* Primary Deploy Button */}
         <button

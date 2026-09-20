@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
   LayoutDashboard, Rocket, Network, PieChart, 
-  Settings, Cloud, ChevronDown, ShieldCheck, Box
+  Settings, Cloud, ChevronDown, ShieldCheck, Box, Bot
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -13,6 +13,7 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onCloseMobile }) => {
   const navItems = [
     { to: '/', label: 'Mission Control', icon: LayoutDashboard },
+    { to: '/copilot', label: 'MCP Copilot', icon: Bot, badge: 'AI' },
     { to: '/deployments', label: 'Deployments', icon: Rocket, badge: 'Active' },
     { to: '/topology', label: 'Infrastructure Map', icon: Network },
     { to: '/usage', label: 'Usage & Costs', icon: PieChart, badge: '₹0' },
