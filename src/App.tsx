@@ -9,6 +9,7 @@ import { TopologyPage } from './pages/TopologyPage';
 import { UsagePage } from './pages/UsagePage';
 import { SettingsPage } from './pages/SettingsPage';
 import { MigrationWizard } from './pages/MigrationWizard';
+import { CopilotPage } from './pages/CopilotPage';
 import { telemetry } from './services/telemetry';
 
 export const App: React.FC = () => {
@@ -40,6 +41,7 @@ export const App: React.FC = () => {
           <main className="flex-1 pb-16">
             <Routes>
               <Route path="/" element={<MissionControl onOpenDeployModal={() => setIsDeployModalOpen(true)} />} />
+              <Route path="/copilot" element={<CopilotPage />} />
               <Route path="/deployments" element={<DeploymentsPage />} />
               <Route path="/topology" element={<TopologyPage />} />
               <Route path="/usage" element={<UsagePage />} />
