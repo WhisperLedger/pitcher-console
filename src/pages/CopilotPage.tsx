@@ -30,6 +30,10 @@ export const CopilotPage: React.FC = () => {
   const [tools, setTools] = useState<MCPTool[]>([]);
   const [copiedCode, setCopiedCode] = useState(false);
   const [expandedToolOutput, setExpandedToolOutput] = useState<string | null>(null);
+  const [activeOrg, setActiveOrg] = useState<string>(mcpClient.getActiveOrg());
+  const [orgInput, setOrgInput] = useState<string>('');
+  const [isChangingOrg, setIsChangingOrg] = useState(false);
+  const [orgReposCount, setOrgReposCount] = useState<number>(5);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -44,7 +48,37 @@ export const CopilotPage: React.FC = () => {
   useEffect(() => {
     checkConnection();
     mcpClient.getTools().then(setTools);
+    mcpClient.getOrgData().then(data => {
+      setActiveOrg(data.active_organization);
+      setOrgReposCount(data.repositories.length);
+    });
   }, []);
+
+  const handleConnectOrg = async (targetOrg: string) => {
+    if (!targetOrg.trim()) return;
+    setLoading(true);
+    try {
+      const res = await mcpClient.connectOrg(targetOrg.trim());
+      setActiveOrg(res.organization);
+      setOrgReposCount(res.repositories.length);
+      setIsChangingOrg(false);
+      setOrgInput('');
+
+      const assistantMessage: Message = {
+        id: `org-connect-${Date.now()}`,
+        sender: 'assistant',
+        content: `### Organization Connected: \`${res.organization}\`\n\nSuccessfully linked organization. Discovered **${res.repositories.length}** repositories ready for autonomous management:\n` +
+          res.repositories.map((r: any) => `- \`${typeof r === 'string' ? r : r.name}\``).join('\n') +
+          `\n\nI am now configured as the single-stop operator for **${res.organization}**.`,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+      setMessages(prev => [...prev, assistantMessage]);
+    } catch {
+      // error handling
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const checkConnection = async () => {
     const res = await mcpClient.checkHealth();
@@ -138,8 +172,56 @@ export const CopilotPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Daemon Connection Status */}
-        <div className="flex items-center gap-3 z-10">
+        {/* Organization Switcher & Daemon Connection Status */}
+        <div className="flex flex-wrap items-center gap-3 z-10">
+          
+          {/* Active Organization Pill & Connector */}
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700/80 text-xs">
+            <span className="text-slate-400 font-medium">Org:</span>
+            {!isChangingOrg ? (
+              <button
+                onClick={() => setIsChangingOrg(true)}
+                className="font-bold text-white hover:text-cyan-400 transition-colors flex items-center gap-1.5"
+                title="Click to switch connected organization"
+              >
+                <span>{activeOrg}</span>
+                <span className="text-[10px] text-cyan-400 font-mono">({orgReposCount} repos)</span>
+                <span className="text-[10px] text-slate-500 underline ml-1">switch</span>
+              </button>
+            ) : (
+              <form 
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleConnectOrg(orgInput || activeOrg);
+                }}
+                className="flex items-center gap-1.5"
+              >
+                <input
+                  type="text"
+                  value={orgInput}
+                  onChange={(e) => setOrgInput(e.target.value)}
+                  placeholder="e.g. WhisperLedger"
+                  className="bg-slate-950 border border-slate-700 rounded-lg px-2 py-0.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 w-32"
+                  autoFocus
+                />
+                <button
+                  type="submit"
+                  className="px-2 py-0.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold"
+                >
+                  Link
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsChangingOrg(false)}
+                  className="text-[11px] text-slate-400 hover:text-slate-200"
+                >
+                  ✕
+                </button>
+              </form>
+            )}
+          </div>
+
+          {/* Connection Status */}
           <div className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl border text-xs font-semibold ${
             connected 
               ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' 

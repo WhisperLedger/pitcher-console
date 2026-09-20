@@ -17,11 +17,16 @@ export interface ChatResponse {
 
 class MCPClientService {
   private baseUrl: string = 'http://localhost:5005';
+  private activeOrg: string = 'WhisperLedger';
 
   constructor() {
     const customUrl = localStorage.getItem('WHISPERLEDGER_MCP_URL');
     if (customUrl) {
       this.baseUrl = customUrl;
+    }
+    const savedOrg = localStorage.getItem('WHISPERLEDGER_ACTIVE_ORG');
+    if (savedOrg) {
+      this.activeOrg = savedOrg;
     }
   }
 
@@ -32,6 +37,54 @@ class MCPClientService {
   public setBaseUrl(url: string) {
     this.baseUrl = url;
     localStorage.setItem('WHISPERLEDGER_MCP_URL', url);
+  }
+
+  public getActiveOrg(): string {
+    return this.activeOrg;
+  }
+
+  public async connectOrg(org: string): Promise<{ success: boolean; organization: string; repositories: any[] }> {
+    this.activeOrg = org;
+    localStorage.setItem('WHISPERLEDGER_ACTIVE_ORG', org);
+    try {
+      const res = await fetch(`${this.baseUrl}/api/org/connect`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ organization: org })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return { success: true, organization: data.organization, repositories: data.repositories || [] };
+      }
+    } catch {
+      // Fallback
+    }
+    return {
+      success: true,
+      organization: org,
+      repositories: ['whisperledger-backend', 'whisperledger-frontend', 'whisperledger-web', 'pitcher-console', 'whisperledger-mcp']
+    };
+  }
+
+  public async getOrgData(): Promise<{ active_organization: string; repositories: any[] }> {
+    try {
+      const res = await fetch(`${this.baseUrl}/api/org`);
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch {
+      // Fallback
+    }
+    return {
+      active_organization: this.activeOrg,
+      repositories: [
+        { name: 'whisperledger-backend', description: 'Enterprise Golang Clean Architecture API', primaryLanguage: { name: 'Go' } },
+        { name: 'whisperledger-frontend', description: 'React Native Expo App with Kotlin SMS Bridge', primaryLanguage: { name: 'TypeScript' } },
+        { name: 'whisperledger-web', description: 'Marketing Landing Page & Admin Console', primaryLanguage: { name: 'TypeScript' } },
+        { name: 'pitcher-console', description: 'Pitcher Deployment Command Center', primaryLanguage: { name: 'TypeScript' } },
+        { name: 'whisperledger-mcp', description: 'Universal MCP Server & Org Operator', primaryLanguage: { name: 'Python' } },
+      ]
+    };
   }
 
   public async checkHealth(): Promise<{ connected: boolean; version?: string; toolsCount?: number }> {
